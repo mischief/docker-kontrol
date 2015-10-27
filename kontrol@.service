@@ -1,0 +1,31 @@
+[Unit]
+Description=%n
+Requires=etcd2.service docker.service
+After=etcd2.service docker.service
+
+[Service]
+SyslogIdentifier=%p
+Restart=always
+RestartSec=10s
+
+EnvironmentFile=/etc/environment
+
+ExecStartPre=-/usr/bin/docker kill %p.%i
+ExecStartPre=-/usr/bin/docker rm -f %p.%i
+ExecStartPre=/usr/bin/docker pull mischief/kontrol:latest
+ExecStart=/bin/sh -c "/usr/bin/docker run --name %p.%i --rm \
+	-e KONTROL_STORAGE=etcd \
+	-e KONTROL_USERNAME=kontrol  \
+	-e KONTROL_MACHINES=$COREOS_PRIVATE_IPV4:2379 \
+	-e KONTROL_PORT=6000 \
+	-e KONTROL_KONTROLURL=http://${COREOS_PRIVATE_IPV4}:6000/kite \
+	-e KONTROL_PUBLICKEYFILE=/srv/kontrol/pub.pem \
+	-e KONTROL_PRIVATEKEYFILE=/srv/kontrol/key.pem \
+	-v /srv/kontrol:/srv/kontrol \
+	-p ${COREOS_PRIVATE_IPV4}:6000:6000 \
+	mischief/kontrol:latest"
+ExecStop=-/usr/bin/docker stop %p.%i
+
+[X-Fleet]
+Conflicts=%p.%i
+

@@ -1,0 +1,16 @@
+#!/bin/sh
+
+export KITE_HOME=/srv/kontrol
+mkdir -p $KITE_HOME
+
+#[ -z "$KITE_KEY" ] && echo "set KITE_KEY" && exit 1;
+
+#echo "$KITE_KEY" > $KITE_HOME/kite.key
+
+[ -f $KITE_HOME/key.pem ] || openssl genrsa -out $KITE_HOME/key.pem 2048
+[ -f $KITE_HOME/pub.pem ] || openssl rsa -in $KITE_HOME/key.pem -pubout > $KITE_HOME/pub.pem
+
+kontrol -initial || exit 1
+#kitectl showkey
+exec kontrol $@
+
